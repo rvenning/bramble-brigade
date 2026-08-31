@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Bramble Brigade 🌻 — Hold the Vegetable Patch</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f7e9cf">
+<meta name="description" content="Plant a brigade of defenders across five beds and hold the vegetable patch against slugs, snails, wasps and worse. A lane-defence game for eight and up.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bramble Brigade">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lib/gk-base.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌻</text></svg>">
+</head>
+<body>
+
+<!-- Splash -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-inner">
+    <div class="splash-row" aria-hidden="true"><span>🌻</span><span>🌶️</span><span>🪵</span><span>🐌</span></div>
+    <h1 class="logo">BRAMBLE<span>BRIGADE</span></h1>
+    <p class="tagline">Five beds. One gate. Everything in the garden wants your vegetables.</p>
+    <button class="btn big" id="btn-continue-as" style="display:none"></button>
+    <button class="btn big" id="btn-start" onclick="App.play()">🌱 Play</button>
+    <button class="btn ghost" id="btn-install" style="display:none">📲 Add to Home Screen</button>
+    <div class="splash-foot">
+      <span id="sync-badge">…</span>
+      <button class="btn-sound icon-btn">🔊</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile picker (roster + PIN modals are injected by GK.Profiles) -->
+<div class="screen" id="screen-profiles">
+  <header class="bar">
+    <button class="icon-btn" onclick="App.showScreen('splash')" aria-label="Back">←</button>
+    <h2>Who's gardening?</h2>
+    <button class="btn-sound icon-btn">🔊</button>
+  </header>
+  <div class="profile-list" id="profile-list"></div>
+</div>
+
+<!-- Garden map -->
+<div class="screen" id="screen-map">
+  <header class="bar sticky">
+    <button class="icon-btn" onclick="App.play()" aria-label="Switch gardener">👥</button>
+    <div class="map-player" id="map-player"></div>
+    <span class="map-stat" id="map-stars"></span>
+    <span class="map-stat" id="map-coins"></span>
+  </header>
+  <button class="btn big continue" id="btn-continue"></button>
+  <div class="map-actions">
+    <button class="btn blue" onclick="App.showShop()">🏚️ Potting Shed</button>
+    <button class="btn blue" onclick="App.showAlmanac()">📖 Almanac</button>
+    <button class="btn blue" onclick="App.showLeaderboard()">🏆 Family</button>
+  </div>
+  <button class="btn wide amber" id="btn-endless" onclick="App.showEndless()"></button>
+  <div class="level-grid" id="level-grid"></div>
+</div>
+
+<!-- Seed picker -->
+<div class="screen" id="screen-seeds">
+  <header class="bar sticky">
+    <button class="icon-btn" onclick="App.showMap()" aria-label="Back to the garden map">←</button>
+    <h2 id="seeds-title"></h2>
+    <span class="map-stat" id="seeds-count"></span>
+  </header>
+  <p class="screen-hint" id="seeds-intro"></p>
+  <div class="warn" id="seeds-warn" style="display:none"></div>
+  <div class="seed-choices" id="seed-choices"></div>
+  <div class="seed-actions">
+    <button class="btn grey" onclick="App.autoSeeds()">🎲 Pick for me</button>
+    <button class="btn green" id="btn-sow" onclick="App.sow()">🌱 Sow the beds</button>
+  </div>
+</div>
+
+<!-- Game -->
+<div class="screen" id="screen-game">
+  <header class="game-bar">
+    <button class="icon-btn" onclick="App.pause()" aria-label="Pause">⏸</button>
+    <span class="water" id="hud-water-wrap"><span class="drop">💧</span><b id="hud-water">0</b></span>
+    <div class="wave-box">
+      <span class="hud-level" id="hud-level"></span>
+      <span class="wave-track"><span class="wave-fill" id="wave-fill"></span></span>
+      <span class="hud-wave" id="hud-wave"></span>
+    </div>
+    <button class="icon-btn" id="btn-rally" onclick="App.rally()" aria-label="Call the next wave in early for bonus water">📣</button>
+    <button class="icon-btn" id="btn-speed" onclick="App.toggleSpeed()" aria-label="Game speed">▶️ 1×</button>
+  </header>
+  <div class="game-stage">
+    <canvas id="cv"></canvas>
+  </div>
+  <div class="tray" id="tray"></div>
+</div>
+
+<!-- Results -->
+<div class="screen" id="screen-results">
+  <div class="res-inner">
+    <div class="res-emoji" id="res-emoji">🌻</div>
+    <h2 class="res-title" id="res-title"></h2>
+    <div class="res-stars" id="res-stars"></div>
+    <div class="res-detail" id="res-detail"></div>
+    <div class="res-unlock" id="res-unlock" style="display:none"></div>
+    <p class="res-finished" id="res-finished" style="display:none">👑 Every garden held, every boss seen off. The patch is yours.</p>
+    <div class="res-actions">
+      <button class="btn ghost" onclick="App.showMap()">🗺️ Map</button>
+      <button class="btn grey" id="res-retry"></button>
+      <button class="btn green" id="res-next" style="display:none"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Potting Shed -->
+<div class="screen" id="screen-shop">
+  <header class="bar sticky">
+    <button class="icon-btn" onclick="App.showMap()" aria-label="Back to the garden map">←</button>
+    <h2>🏚️ Potting Shed</h2>
+    <span class="map-stat" id="shop-coins"></span>
+  </header>
+  <p class="screen-hint">Coins come from every level you finish. Everything you buy here is permanent.</p>
+  <div class="shop-list" id="shop-list"></div>
+</div>
+
+<!-- Almanac -->
+<div class="screen" id="screen-almanac">
+  <header class="bar sticky">
+    <button class="icon-btn" onclick="App.showMap()" aria-label="Back to the garden map">←</button>
+    <h2>📖 Almanac</h2>
+    <button class="btn-sound icon-btn">🔊</button>
+  </header>
+  <h3 class="alm-head">🌱 The Brigade</h3>
+  <div class="alm-list" id="almanac-plants"></div>
+  <h3 class="alm-head">🐌 The Trouble</h3>
+  <div class="alm-list" id="almanac-pests"></div>
+</div>
+
+<!-- Leaderboard -->
+<div class="screen" id="screen-leaderboard">
+  <header class="bar sticky">
+    <button class="icon-btn" onclick="App.showMap()" aria-label="Back to the garden map">←</button>
+    <h2>🏆 The Family</h2>
+    <button class="btn-sound icon-btn">🔊</button>
+  </header>
+  <p class="screen-hint">Ranked by how long you lasted in the Long Summer.</p>
+  <div class="lb-rows" id="lb-rows"></div>
+</div>
+
+<!-- Pause -->
+<div class="modal" id="modal-pause">
+  <div class="modal-box">
+    <h2>⏸ Paused</h2>
+    <div class="row-btns2">
+      <button class="btn green" onclick="App.resume()">▶️ Keep Playing</button>
+      <button class="btn blue" onclick="App.showHelp()">❓ How to Play</button>
+    </div>
+    <button class="btn grey wide" style="margin-top:10px" onclick="App.quit()">🗺️ Quit to Map</button>
+  </div>
+</div>
+
+<!-- How to play -->
+<div class="modal" id="modal-help">
+  <div class="modal-box">
+    <h2>❓ How to Play</h2>
+    <ol class="help-steps">
+      <li><b>Pick a seed packet</b> at the bottom, then <b>tap a square</b> to plant it. Slide your finger before you lift if you aimed badly — nothing happens until you let go.</li>
+      <li>Everything costs <b>💧 water</b>. <b>Wellsprings</b> make more of it. Plant those first, every single time.</li>
+      <li>Tap the water drops to collect them — or leave them, they come to you in the end.</li>
+      <li>Pests walk <b>down</b> the beds toward your gate. Each row has a <b>🧑‍🌾 scarecrow</b> that saves it once. After that, one pest through the gate and the level is over.</li>
+      <li>Not everything can be beaten the same way. A <b>🐚 shell</b> shrugs off ordinary shots, and anything with <b>wings</b> flies straight over the ground. Check the 📖 Almanac.</li>
+      <li>Press <b>📣</b> to call the next wave in early for bonus water, and <b>⏩</b> to speed the whole thing up.</li>
+    </ol>
+    <button class="btn green wide" onclick="App.resume()">Got it!</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- gamekit (vendored from rvenning/gamekit into lib/) -->
+<script src="lib/gk-util.js"></script>
+<script src="lib/gk-audio.js"></script>
+<script src="lib/gk-ui.js"></script>
+<script src="lib/gk-storage.js"></script>
+<script src="lib/gk-profiles.js"></script>
+<script src="lib/gk-pwa.js"></script>
+<script src="lib/gk-fx.js"></script>
+<script src="lib/gk-debug.js"></script>
+<script>
+  // Lots of small hits rather than a few big ones, so the particles are light
+  // and quick — the one exception is the Beetroot Bomb, which gets its punch
+  // from shake and flash instead of from a bigger pool.
+  GK.Fx.configure({
+    grav: 420, poolCap: 520, shakeMax: 14, shakeDecay: 30, shape: "circle",
+    burstSpeed: 150, burstSize: 2.6, textSize: 14, textDy: -30, textCap: 24,
+    font: "'Baloo 2',sans-serif",
+  });
+</script>
+<script src="js/firebase-config.js"></script>
+<!-- data registries -->
+<script src="js/plants.js"></script>
+<script src="js/pests.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/upgrades.js"></script>
+<script src="js/endless.js"></script>
+<!-- systems -->
+<script src="js/game.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

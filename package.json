@@ -1,0 +1,13 @@
+{
+  "name": "bramble-brigade",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hold the vegetable patch: a five-lane garden defence for eight and up.",
+  "scripts": {
+    "test": "node --test",
+    "report": "BB_REPORT=1 node --test tests/bot.test.js",
+    "diag": "node tests/diag.js",
+    "calibrate": "node tools/calibrate.js",
+    "icons": "node tools/make-icons.js"
+  }
+}
